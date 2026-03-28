@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>React Interview Battleground ⚔</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Space Grotesk',sans-serif;background:#0a0a0f;color:#e8e6ff;min-height:100vh;overflow-x:hidden}
+  :root{
+    --neon:#7c5cfc;--neon2:#00d4ff;--gold:#ffd700;--red:#ff4757;--green:#2ed573;
+    --card:#12111a;--border:#2a2640;--text:#e8e6ff;--muted:#6b68a0
+  }
+  .app{max-width:900px;margin:0 auto;padding:16px}
+
+  .header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#12111a;border:1px solid #2a2640;border-radius:12px;margin-bottom:16px}
+  .logo{font-size:18px;font-weight:700;letter-spacing:1px;color:#7c5cfc}
+  .logo span{color:#00d4ff}
+  .stats{display:flex;gap:20px;align-items:center}
+  .stat{text-align:center}
+  .stat-val{font-size:18px;font-weight:700;color:#ffd700;font-family:'JetBrains Mono',monospace}
+  .stat-label{font-size:10px;color:#6b68a0;letter-spacing:1px}
+  .xp-bar-wrap{display:flex;align-items:center;gap:8px}
+  .xp-bar{width:120px;height:6px;background:#2a2640;border-radius:99px;overflow:hidden}
+  .xp-fill{height:100%;background:linear-gradient(90deg,#7c5cfc,#00d4ff);border-radius:99px;transition:width 0.5s ease}
+  .level{font-size:11px;font-family:'JetBrains Mono',monospace;color:#7c5cfc;font-weight:700}
+
+  .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .tab{padding:8px 18px;border-radius:8px;border:1px solid #2a2640;background:#12111a;color:#6b68a0;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.2s;font-family:'Space Grotesk',sans-serif}
+  .tab.active{background:#7c5cfc;color:#fff;border-color:#7c5cfc}
+  .tab:hover:not(.active){border-color:#7c5cfc;color:#e8e6ff}
+
+  .view{display:none}.view.active{display:block}
+
+  .map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .zone{background:#12111a;border:1px solid #2a2640;border-radius:12px;padding:16px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden}
+  .zone::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(124,92,252,0.07));pointer-events:none}
+  .zone:hover{border-color:#7c5cfc;transform:translateY(-2px)}
+  .zone.locked{opacity:0.45;cursor:not-allowed}
+  .zone.locked:hover{transform:none;border-color:#2a2640}
+  .zone-icon{font-size:28px;margin-bottom:8px}
+  .zone-name{font-size:14px;font-weight:600;margin-bottom:4px}
+  .zone-desc{font-size:12px;color:#6b68a0;margin-bottom:10px;line-height:1.5}
+  .zone-meta{display:flex;justify-content:space-between;align-items:center}
+  .zone-xp{font-size:11px;font-family:'JetBrains Mono',monospace;color:#ffd700}
+  .zone-status{font-size:10px;padding:3px 8px;border-radius:99px;font-weight:600}
+  .status-open{background:rgba(124,92,252,0.2);color:#7c5cfc}
+  .status-locked{background:rgba(107,104,160,0.15);color:#6b68a0}
+  .boss-badge{position:absolute;top:10px;right:10px;font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(255,71,87,0.2);color:#ff4757;font-weight:700}
+
+  .arena{background:#12111a;border:1px solid #2a2640;border-radius:12px;padding:20px}
+  .arena-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+  .arena-title{font-size:16px;font-weight:700}
+  .arena-tag{font-size:10px;padding:3px 10px;border-radius:99px;background:rgba(0,212,255,0.15);color:#00d4ff;font-weight:600;letter-spacing:1px}
+  .q-text{font-size:14px;line-height:1.7;color:#c8c6e8;margin-bottom:16px;padding:14px;background:#0d0c17;border-radius:8px;border-left:3px solid #7c5cfc}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+  .opt{padding:12px 14px;background:#0d0c17;border:1px solid #2a2640;border-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s;font-family:'Space Grotesk',sans-serif;color:#e8e6ff;text-align:left}
+  .opt:hover:not(:disabled){border-color:#7c5cfc;background:rgba(124,92,252,0.1)}
+  .opt.correct{border-color:#2ed573;background:rgba(46,213,115,0.1);color:#2ed573}
+  .opt.wrong{border-color:#ff4757;background:rgba(255,71,87,0.1);color:#ff4757}
+  .opt:disabled{cursor:not-allowed}
+  .opt-letter{display:inline-block;width:22px;height:22px;border-radius:5px;background:#2a2640;text-align:center;line-height:22px;font-size:11px;font-weight:700;margin-right:8px;font-family:'JetBrains Mono',monospace}
+  .explanation{display:none;padding:14px;background:#0d0c17;border-radius:8px;border-left:3px solid #2ed573;font-size:13px;line-height:1.7;color:#c8c6e8;margin-bottom:16px}
+  .explanation.show{display:block}
+  .arena-footer{display:flex;justify-content:space-between;align-items:center}
+  .progress-dots{display:flex;gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;background:#2a2640;transition:background 0.3s}
+  .dot.done{background:#2ed573}.dot.active{background:#7c5cfc}
+  .btn{padding:10px 22px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:'Space Grotesk',sans-serif;transition:all 0.2s}
+  .btn-primary{background:#7c5cfc;color:#fff}.btn-primary:hover{background:#9070ff}
+  .btn-outline{background:transparent;border:1px solid #2a2640;color:#e8e6ff}.btn-outline:hover{border-color:#7c5cfc}
+  .btn-danger{background:#ff4757;color:#fff}
+
+  .flashcard-wrap{perspective:800px}
+  .flashcard{width:100%;height:220px;position:relative;transform-style:preserve-3d;transition:transform 0.5s;cursor:pointer}
+  .flashcard.flipped{transform:rotateY(180deg)}
+  .fc-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;border:1px solid #2a2640;background:#12111a}
+  .fc-back{transform:rotateY(180deg);background:#0d0c17;border-color:#7c5cfc}
+  .fc-label{font-size:10px;letter-spacing:2px;color:#6b68a0;margin-bottom:12px;font-weight:600}
+  .fc-text{font-size:16px;font-weight:600;line-height:1.5}
+  .fc-back .fc-text{font-size:13px;color:#c8c6e8;line-height:1.7;font-weight:400}
+  .fc-nav{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+  .fc-counter{font-size:12px;color:#6b68a0;font-family:'JetBrains Mono',monospace}
+  .fc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .fc-chip{padding:8px 10px;border-radius:8px;border:1px solid #2a2640;background:#12111a;cursor:pointer;font-size:12px;transition:all 0.2s;text-align:center;color:#e8e6ff}
+  .fc-chip:hover{border-color:#7c5cfc;color:#7c5cfc}
+  .fc-chip.sel{border-color:#7c5cfc;background:rgba(124,92,252,0.15);color:#7c5cfc}
+
+  .boss-arena{background:#12111a;border:1px solid #ff4757;border-radius:12px;padding:20px}
+  .boss-header{text-align:center;margin-bottom:20px}
+  .boss-icon{font-size:48px;display:block;margin-bottom:8px;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  .boss-name{font-size:20px;font-weight:700;color:#ff4757}
+  .boss-hp{margin:10px auto;max-width:400px}
+  .hp-label{display:flex;justify-content:space-between;font-size:11px;color:#6b68a0;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+  .hp-bar{height:10px;background:#2a2640;border-radius:99px;overflow:hidden}
+  .hp-fill{height:100%;background:linear-gradient(90deg,#ff4757,#ff6b81);border-radius:99px;transition:width 0.5s}
+  .boss-choices{display:grid;gap:8px;margin:12px 0}
+  .boss-choice{padding:12px 16px;background:#0d0c17;border:1px solid #2a2640;border-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s;font-family:'Space Grotesk',sans-serif;color:#e8e6ff;text-align:left}
+  .boss-choice:hover{border-color:#ff4757;background:rgba(255,71,87,0.08)}
+  .boss-choice.hit{border-color:#2ed573;background:rgba(46,213,115,0.08);color:#2ed573}
+  .boss-choice.miss{border-color:#ff4757;background:rgba(255,71,87,0.08);color:#ff4757}
+
+  .schedule{display:flex;flex-direction:column;gap:10px}
+  .time-block{display:flex;gap:14px;align-items:flex-start;padding:14px;background:#12111a;border:1px solid #2a2640;border-radius:10px}
+  .time-tag{font-size:11px;font-family:'JetBrains Mono',monospace;color:#6b68a0;min-width:90px;padding-top:2px}
+  .time-content{flex:1}
+  .time-title{font-size:14px;font-weight:600;margin-bottom:3px}
+  .time-topics{font-size:12px;color:#6b68a0;line-height:1.5}
+  .time-xp{font-size:11px;font-family:'JetBrains Mono',monospace;color:#ffd700;margin-top:4px}
+  .phase-badge{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:700;margin-left:8px}
+  .phase-warm{background:rgba(255,215,0,0.15);color:#ffd700}
+  .phase-battle{background:rgba(255,71,87,0.15);color:#ff4757}
+  .phase-boss{background:rgba(124,92,252,0.2);color:#7c5cfc}
+  .phase-rest{background:rgba(46,213,115,0.15);color:#2ed573}
+
+  .notif{position:fixed;top:20px;right:20px;background:#7c5cfc;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:999;animation:slidein 0.3s ease,fadeout 0.3s ease 2.7s forwards;pointer-events:none}
+  @keyframes slidein{from{transform:translateX(120%)}to{transform:translateX(0)}}
+  @keyframes fadeout{to{opacity:0;transform:translateX(120%)}}
+
+  @media(max-width:600px){
+    .map-grid{grid-template-columns:1fr 1fr}
+    .options{grid-template-columns:1fr}
+    .stats{gap:10px}
+    .fc-grid{grid-template-columns:repeat(2,1fr)}
+    .tabs{gap:4px}
+    .tab{padding:6px 12px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">React<span>⚔</span>Arena</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="s-xp">0</div><div class="stat-label">XP</div></div>
+      <div class="stat"><div class="stat-val" id="s-streak">0🔥</div><div class="stat-label">STREAK</div></div>
+      <div class="xp-bar-wrap">
+        <div class="level" id="s-level">LV 1</div>
+        <div class="xp-bar"><div class="xp-fill" id="xp-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('map')">🗺 Battle Map</button>
+    <button class="tab" onclick="switchTab('quiz')">⚔ Challenge Arena</button>
+    <button class="tab" onclick="switchTab('cards')">🧠 Concept Cards</button>
+    <button class="tab" onclick="switchTab('boss')">💀 Boss Fight</button>
+    <button class="tab" onclick="switchTab('schedule')">📅 Day Plan</button>
+  </div>
+
+  <div class="view active" id="view-map">
+    <div class="map-grid" id="map-grid"></div>
+  </div>
+
+  <div class="view" id="view-quiz">
+    <div class="arena" id="quiz-arena">
+      <div class="arena-header">
+        <div>
+          <div class="arena-title" id="q-zone-name">Select a Zone</div>
+          <div style="font-size:12px;color:#6b68a0;margin-top:2px" id="q-zone-sub">Go to Battle Map and click a zone to start</div>
+        </div>
+        <div class="arena-tag" id="q-difficulty">MEDIUM</div>
+      </div>
+      <div class="q-text" id="q-text">Click a zone on the Battle Map to start your challenge!</div>
+      <div class="options" id="q-options"></div>
+      <div class="explanation" id="q-explanation"></div>
+      <div class="arena-footer">
+        <div class="progress-dots" id="q-dots"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline" onclick="switchTab('map')">← Map</button>
+          <button class="btn btn-primary" id="q-next" onclick="nextQuestion()" style="display:none">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-cards">
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:#6b68a0;margin-bottom:8px">Select a topic:</div>
+      <div class="fc-grid" id="fc-chips"></div>
+    </div>
+    <div class="flashcard-wrap">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="fc-face fc-front"><div class="fc-label">CONCEPT</div><div class="fc-text" id="fc-front-text">Select a topic above</div></div>
+        <div class="fc-face fc-back"><div class="fc-label">EXPLANATION</div><div class="fc-text" id="fc-back-text">Answer appears here</div></div>
+      </div>
+    </div>
+    <div class="fc-nav" style="margin-top:12px">
+      <button class="btn btn-outline" onclick="prevCard()">← Prev</button>
+      <div class="fc-counter" id="fc-counter">0 / 0</div>
+      <button class="btn btn-outline" onclick="nextCard()">Next →</button>
+    </div>
+    <div style="text-align:center;margin-top:10px">
+      <button class="btn btn-primary" onclick="flipCard()">🔄 Flip Card</button>
+    </div>
+  </div>
+
+  <div class="view" id="view-boss">
+    <div class="boss-arena" id="boss-arena">
+      <div class="boss-header">
+        <span class="boss-icon">🐉</span>
+        <div class="boss-name" id="boss-name">Senior Dev Interviewer</div>
+        <div style="font-size:12px;color:#6b68a0;margin-top:4px">Defeat the interviewer by answering correctly!</div>
+        <div class="boss-hp">
+          <div class="hp-label"><span>BOSS HP</span><span id="boss-hp-num">100/100</span></div>
+          <div class="hp-bar"><div class="hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+        </div>
+        <div class="boss-hp" style="margin-top:8px">
+          <div class="hp-label"><span style="color:#2ed573">YOUR HP</span><span id="player-hp-num">100/100</span></div>
+          <div class="hp-bar"><div class="hp-fill" id="player-hp-fill" style="width:100%;background:linear-gradient(90deg,#2ed573,#00d4ff)"></div></div>
+        </div>
+      </div>
+      <div style="background:#0d0c17;border:1px solid #2a2640;border-radius:10px;padding:16px;margin:16px 0">
+        <div style="font-size:11px;color:#6b68a0;margin-bottom:8px;letter-spacing:1px">BOSS ASKS:</div>
+        <div id="boss-q-text" style="font-size:14px;line-height:1.7;color:#c8c6e8"></div>
+      </div>
+      <div class="boss-choices" id="boss-choices"></div>
+      <div id="boss-feedback" style="display:none;padding:12px;border-radius:8px;font-size:13px;margin:8px 0;line-height:1.6"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+        <button class="btn btn-outline" onclick="newBossFight()">New Boss 🔄</button>
+        <button class="btn btn-danger" id="boss-next" onclick="nextBossQ()" style="display:none">⚔ Next Attack</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-schedule">
+    <div style="font-size:13px;color:#6b68a0;margin-bottom:14px;padding:10px 14px;background:#12111a;border-radius:8px;border-left:3px solid #7c5cfc">
+      🎯 Your full-day React interview prep schedule. Follow this to master React in ONE day.
+    </div>
+    <div class="schedule" id="schedule-list"></div>
+  </div>
+</div>
+
+<script>
+let xp=0,streak=0,level=1;
+let currentZone=null,currentQ=0,answered=false;
+let fcTopic=0,fcIndex=0,fcFlipped=false;
+let bossHp=100,playerHp=100,bossQIdx=0,bossAnswered=false;
+const XP_PER_LEVEL=120;
+
+const zones=[
+  {id:'jsx',icon:'⚡',name:'JSX Fundamentals',desc:'JSX syntax, expressions, conditionals, and rendering',xp:50,locked:false,boss:false},
+  {id:'state',icon:'🧪',name:'useState & State',desc:'Manage local state, updates, and reactive UI',xp:60,locked:false,boss:false},
+  {id:'effects',icon:'🌀',name:'useEffect & Lifecycle',desc:'Side effects, cleanup, and dependency arrays',xp:70,locked:false,boss:false},
+  {id:'props',icon:'📦',name:'Props & Components',desc:'Component composition, prop drilling, children prop',xp:50,locked:false,boss:false},
+  {id:'context',icon:'🌐',name:'Context API',desc:'Global state without prop drilling using useContext',xp:80,locked:false,boss:false},
+  {id:'perf',icon:'🚀',name:'Performance',desc:'useMemo, useCallback, React.memo and re-renders',xp:90,locked:false,boss:true},
+  {id:'hooks',icon:'🎣',name:'Custom Hooks',desc:'Build reusable logic with custom hooks',xp:80,locked:false,boss:false},
+  {id:'refs',icon:'🎯',name:'useRef & DOM',desc:'Refs, mutable values, and direct DOM access',xp:60,locked:false,boss:false},
+  {id:'patterns',icon:'♟',name:'Interview Patterns',desc:'Lifting state, controlled inputs, and common patterns',xp:100,locked:false,boss:true},
+];
+
+const questions={
+  jsx:[
+    {q:'What does JSX stand for and what does it compile to?',opts:['JavaScript XML — compiles to React.createElement()','JavaScript Extension — compiles to HTML','JSON Extension — stays as JSX','JavaScript Extra — compiles to Vue.createNode()'],correct:0,exp:'JSX stands for JavaScript XML. Babel transforms it to React.createElement() calls. For example, <div className="box">Hi</div> becomes React.createElement("div", {className:"box"}, "Hi").',diff:'EASY'},
+    {q:'Why do you need to return only ONE root element from a React component?',opts:['Browser limitation','React.createElement returns a single object — multiple siblings need a parent','Just a style convention','Only class components have this rule'],correct:1,exp:'React.createElement() can only return one value. Multiple siblings would mean returning multiple values from render. Use <></> (Fragment) to wrap siblings without adding a real DOM node.',diff:'EASY'},
+    {q:'What\'s the difference between {} and {{}} in JSX?',opts:['{} embeds JS expressions; {{}} is for inline style objects','{{}} is for comments','They are identical','{{}} evaluates to string'],correct:0,exp:'{} in JSX means "evaluate this JavaScript expression". So style={{color:"red"}} is: outer {} = JSX expression mode, inner {} = a JavaScript object literal. Style takes an object, not a string!',diff:'MEDIUM'},
+    {q:'What happens when you render a boolean, null, or undefined in JSX?',opts:['Throws an error','Renders as "true", "null", "undefined" strings','Renders nothing (empty)','Renders as 0'],correct:2,exp:'React intentionally ignores booleans, null, and undefined — they render nothing. This enables patterns like {isLoaded && <Component />}. But 0 DOES render! Use {count > 0 && <X/>} not {count && <X/>}.',diff:'MEDIUM'},
+  ],
+  state:[
+    {q:'What is the correct way to update state based on the previous value?',opts:['setState(state + 1)','setState(prev => prev + 1)','state = state + 1','setState(state++)'],correct:1,exp:'Always use the functional form setState(prev => prev + 1) when new state depends on old state. React batches updates, so "state" inside handlers could be stale. The function receives the guaranteed latest value.',diff:'MEDIUM'},
+    {q:'What is "stale closure" in React hooks?',opts:['A hook that is not cleaned up','When a function captures an old value of state due to closure','When setState is called too often','A leaked event listener'],correct:1,exp:'Stale closure happens when a function captures a variable from its creation scope, but that variable has since changed. In React: if you use state inside a useEffect without listing it as dependency, you get the initial value forever.',diff:'HARD'},
+    {q:'What happens when you call setState with the same value as current state?',opts:['Always re-renders','React skips re-render (Object.is comparison)','Throws an error','Updates DOM but skips virtual DOM'],correct:1,exp:'React uses Object.is() to compare new and old state. If equal, it bails out and skips re-rendering. This is why you must create NEW objects/arrays when updating state — mutating the same reference won\'t trigger a re-render.',diff:'MEDIUM'},
+    {q:'Which of these correctly updates a nested object in state?',opts:['setState({user.name: "Alice"})','setState({...state, user:{...state.user, name:"Alice"}})','state.user.name="Alice"; setState(state)','setState(Object.assign(state,{name:"Alice"}))'],correct:1,exp:'You must spread ALL levels of the object. Mutating state directly won\'t trigger re-render because the reference doesn\'t change. Spread creates new object references at each level, which React needs to detect changes.',diff:'HARD'},
+  ],
+  effects:[
+    {q:'When does useEffect run with an empty dependency array []?',opts:['Every render','Never','Only on mount (first render)','Only on unmount'],correct:2,exp:'Empty [] means "no dependencies" — the effect only runs once after the first render (mount). It\'s equivalent to componentDidMount in class components. Cleanup runs on unmount only.',diff:'EASY'},
+    {q:'What does the return value of useEffect do?',opts:['Sets new state','Cleanup function — runs before next effect or unmount','Triggers a re-render','Cancels the effect'],correct:1,exp:'Returning a function from useEffect is the cleanup mechanism. It runs before the effect runs again (deps changed) and when component unmounts. Use it to cancel timers, remove event listeners, unsubscribe.',diff:'MEDIUM'},
+    {q:'You have useEffect(() => {fetch(url)}, [url]). What happens when url changes?',opts:['Nothing — only runs on mount','Effect re-runs with new url','Component re-mounts','React throws a warning'],correct:1,exp:'With [url] as dependency, the effect re-runs whenever "url" changes. React first runs the cleanup from the previous effect, then runs the new effect. This is how you keep side effects in sync with props/state.',diff:'MEDIUM'},
+    {q:'What is the "Rules of Hooks" regarding useEffect?',opts:['Can only be called in class components','Must be called at top level — never inside conditions or loops','Must always return a value','Can be called inside event handlers'],correct:1,exp:'Hooks must be called at the top level of a function component — never inside ifs, loops, or nested functions. React relies on the ORDER hooks are called to associate state correctly between renders.',diff:'HARD'},
+  ],
+  props:[
+    {q:'What is "prop drilling" and why is it a problem?',opts:['When props are too large in size','Passing props through many intermediate components that don\'t use them','When props are undefined','A performance optimization technique'],correct:1,exp:'Prop drilling is passing data through multiple layers just to reach a deeply nested child. Middle components don\'t use the prop — just forward it. Creates tight coupling. Solution: Context API, Redux, or Zustand.',diff:'MEDIUM'},
+    {q:'What does the "children" prop represent?',opts:['An array of all props','The JSX content passed between opening and closing tags','Child component class','The component\'s state'],correct:1,exp:'children is a special prop that contains whatever JSX you put between a component\'s opening and closing tags. <Card><p>Hello</p></Card> — inside Card, props.children is <p>Hello</p>.',diff:'EASY'},
+    {q:'Are props mutable inside a component?',opts:['Yes, you can change them freely','No — props are read-only. Mutating them causes errors','Yes, but only in hooks','Only class component props are immutable'],correct:1,exp:'Props are READ-ONLY. A component must never modify its own props — this is "pure function" behavior. Mutating props would break React\'s one-way data flow.',diff:'EASY'},
+  ],
+  context:[
+    {q:'What problem does Context API solve?',opts:['Performance optimization','Prop drilling — sharing data without passing props through every layer','Server-side rendering','Event handling'],correct:1,exp:'Context provides a way to share values (theme, user, language) between components without passing props through every level. createContext() creates it, Provider wraps the tree with a value, useContext() consumes it anywhere below.',diff:'EASY'},
+    {q:'What triggers a re-render when using useContext?',opts:['Any state change in the app','Only when the specific context value changes','Never — context is static','When the Provider unmounts'],correct:1,exp:'Every component that calls useContext(MyContext) re-renders whenever the context VALUE changes. Memoize context values with useMemo() for objects/arrays — otherwise a new object reference each render causes all consumers to re-render.',diff:'HARD'},
+    {q:'What is the correct order to use Context API?',opts:['createContext → useContext → Provider','createContext → Provider → useContext','Provider → createContext → useContext','useContext → createContext → Provider'],correct:1,exp:'1) createContext() to create it. 2) Wrap with <Context.Provider value={...}> at the level you want. 3) useContext(MyContext) in any descendant to consume. Provider must be an ancestor — context only flows DOWN.',diff:'MEDIUM'},
+  ],
+  perf:[
+    {q:'When does React.memo prevent a re-render?',opts:['Always','When parent re-renders but props haven\'t changed (shallow comparison)','When component has no state','When component is a pure function'],correct:1,exp:'React.memo does a shallow comparison of previous and new props. If equal (by reference for objects!), it skips re-rendering. If you pass new object/function references each render, memo won\'t help — combine with useMemo/useCallback.',diff:'MEDIUM'},
+    {q:'What\'s the difference between useMemo and useCallback?',opts:['No difference','useMemo memoizes a VALUE; useCallback memoizes a FUNCTION','useMemo is for async; useCallback for sync','useMemo for arrays; useCallback for objects'],correct:1,exp:'useMemo(() => expensiveCalc(a,b), [a,b]) memoizes the RESULT. useCallback((e) => handleClick(e), [deps]) memoizes the FUNCTION ITSELF (stable reference). Use useCallback when passing functions to memoized children.',diff:'HARD'},
+    {q:'What causes an "unnecessary re-render" in React?',opts:['Using useState','Parent re-renders, or props change by reference even if value is same','Using more than 5 hooks','Having deeply nested components'],correct:1,exp:'Common causes: 1) Parent re-renders → all children re-render by default. 2) New object/array reference as prop each render. 3) New function created inline each render. Fix: React.memo + useCallback/useMemo.',diff:'HARD'},
+  ],
+  hooks:[
+    {q:'What makes a valid custom hook?',opts:['Must use at least 3 built-in hooks','A function starting with "use" that can call other hooks','Must be exported as default','Needs a special decorator'],correct:1,exp:'A custom hook is just a regular JS function whose name starts with "use" — this lets React\'s linter enforce Rules of Hooks. Inside it, you can call any built-in or other custom hooks. It\'s pure logic extraction — no JSX.',diff:'EASY'},
+    {q:'What is the main benefit of custom hooks?',opts:['Better performance','Reusing stateful logic across multiple components','Replacing Context API','Avoiding re-renders'],correct:1,exp:'Custom hooks let you extract and SHARE stateful logic between components. Without them, you\'d repeat the same useEffect + useState patterns everywhere. Examples: useFetch, useLocalStorage, useDebounce — all reusable.',diff:'MEDIUM'},
+    {q:'Can a custom hook return anything?',opts:['Only arrays like useState does','Only objects','Yes — any value: object, array, function, primitive, or nothing','Only JSX'],correct:2,exp:'Custom hooks can return anything — objects, arrays, single values, functions, or nothing. Convention: use object if values are always used together, use array if order matters (like useState).',diff:'MEDIUM'},
+  ],
+  refs:[
+    {q:'What is useRef mainly used for?',opts:['State management','Storing a mutable value that persists across renders WITHOUT causing re-renders','Fetching data','Memoizing functions'],correct:1,exp:'useRef returns a {current: initialValue} object. Mutating ref.current does NOT trigger a re-render — it\'s a mutable box that survives renders. Use cases: DOM access, storing timer IDs, tracking previous values.',diff:'MEDIUM'},
+    {q:'How do you focus an input element using useRef?',opts:['ref.current.setState({focus:true})','ref={inputRef} on the element, then inputRef.current.focus()','useRef(document.focus())','inputRef.focus() directly'],correct:1,exp:'1) const inputRef = useRef(null) 2) Attach: <input ref={inputRef} /> 3) Access DOM: inputRef.current.focus(). React sets ref.current to the actual DOM node after mount.',diff:'MEDIUM'},
+  ],
+  patterns:[
+    {q:'What is "lifting state up"?',opts:['Moving state to a higher component to share between siblings','Using Context API','Converting class to function component','Optimizing with useMemo'],correct:0,exp:'When two siblings need to share state, you "lift" it to their closest common ancestor. That parent holds state and passes it down as props + setter callbacks. React\'s primary sharing pattern before Context.',diff:'MEDIUM'},
+    {q:'What is a "controlled component" in React?',opts:['A component managed by Redux','Form element where React state is the single source of truth','A component with no children','A memoized component'],correct:1,exp:'Controlled input: <input value={val} onChange={e => setVal(e.target.value)} />. React state IS the truth. Contrast with uncontrolled (using ref). Controlled inputs let you validate every keystroke.',diff:'MEDIUM'},
+    {q:'What pattern does this represent: <Button onClick={handleSave}>Save</Button>?',opts:['Render prop','Higher-order component','Callback prop pattern (lifting behavior up)','Context consumer'],correct:2,exp:'Callback prop pattern — parent passes a function DOWN to child as prop. When Button is clicked, it calls the parent\'s function. This is how children communicate UP in React\'s one-way data flow.',diff:'EASY'},
+  ],
+};
+
+const flashcards={
+  'JSX':[
+    {front:'What is JSX?',back:'JavaScript XML — syntax extension that looks like HTML but transpiles to React.createElement() calls. Allows writing UI declaratively inside JS.'},
+    {front:'JSX key rules',back:'1) Return one root element (or Fragment <>). 2) Close ALL tags. 3) Use className not class. 4) camelCase attributes (onClick, htmlFor). 5) {} for JS expressions.'},
+    {front:'Fragment <>',back:'Lets you return multiple elements without adding a real DOM node. <><Child1/><Child2/></> becomes nothing in the DOM — just its children.'},
+    {front:'Keys in lists',back:'Unique identifier on each list element. Helps React identify which items changed/added/removed. Use stable IDs, never array index if list can reorder.'},
+  ],
+  'useState':[
+    {front:'useState signature',back:'const [state, setState] = useState(initialValue). Returns current value + setter. Re-renders component when setState is called with a different value.'},
+    {front:'Functional update',back:'setState(prev => prev + 1). Use when new state depends on old state. Prevents stale closure issues in async or batched updates.'},
+    {front:'State batching',back:'React 18+ batches ALL state updates into one re-render. Multiple setStates in one handler = one render. Use flushSync() to opt out.'},
+    {front:'Never mutate state',back:'Always return NEW objects/arrays. Wrong: state.items.push(x) then setState(state). Right: setState({...state, items:[...state.items, x]}). Mutation skips re-render.'},
+  ],
+  'useEffect':[
+    {front:'Dependency array rules',back:'No array: runs every render. []: runs once on mount. [a,b]: runs when a or b changes. React uses Object.is() to compare dependencies.'},
+    {front:'Cleanup function',back:'Return a function from useEffect. Runs before next effect AND on unmount. Use for: clearTimeout, removeEventListener, cancel fetch, unsubscribe.'},
+    {front:'Data fetching pattern',back:'let cancelled=false; fetch(url).then(d=>{ if(!cancelled) setData(d) }); return ()=>{ cancelled=true }. Prevents setting state on unmounted component.'},
+    {front:'Missing dependencies',back:'Using a value inside useEffect without listing it as dependency = stale closure. You always get the initial value. ESLint exhaustive-deps rule catches this.'},
+  ],
+  'Hooks':[
+    {front:'useRef vs useState',back:'useState: triggers re-render on change. useRef: mutable, persists across renders, NO re-render. Use ref for DOM access, timers, previous values.'},
+    {front:'useMemo',back:'useMemo(() => expensiveCompute(a,b), [a,b]). Memoizes the RESULT. Only recomputes when deps change. Don\'t overuse — has its own overhead.'},
+    {front:'useCallback',back:'useCallback(fn, [deps]). Memoizes the FUNCTION REFERENCE. Pass to memoized child components to prevent their re-render. Stable reference = no extra renders.'},
+    {front:'useContext',back:'const value = useContext(MyContext). Reads from nearest Provider above it. Re-renders when Provider value changes. Must be inside the Provider tree.'},
+  ],
+  'Patterns':[
+    {front:'Lifting State Up',back:'Move shared state to the closest common ancestor. Pass state down as props, pass setter/callbacks down. Siblings communicate via parent.'},
+    {front:'Controlled vs Uncontrolled',back:'Controlled: value={state} onChange={setter} — React is truth. Uncontrolled: ref={inputRef} — DOM is truth. Prefer controlled for validation.'},
+    {front:'Render Props',back:'<Component render={(data) => <UI data={data}/>}/>. Pass function as prop to share logic + let caller control rendering. Mostly replaced by custom hooks today.'},
+    {front:'Composition over HOC',back:'Instead of wrapping in HOCs, use composition: pass components as props or children. More readable, no wrapper hell, no prop namespace collisions.'},
+  ],
+};
+
+const bossQuestions=[
+  {q:'I have 1000 items in a list and it\'s slow. Walk me through how you\'d optimize this React component.',choices:['Use React.memo on list items + useCallback on handlers + virtualization (react-window)','Add more RAM to the server','Use jQuery instead','Wrap the entire list in useMemo'],correct:0,dmg:35,exp:'The holy trinity of list optimization: 1) React.memo on each Item so unchanged items don\'t re-render. 2) useCallback on handlers so references are stable. 3) Virtualization (react-window) to only render visible items.'},
+  {q:'Explain the Virtual DOM and how React\'s reconciliation works.',choices:['React diffs virtual DOM vs real DOM, only updates changed nodes — O(n) algorithm','React rebuilds the entire DOM each render','React uses jQuery to update the DOM','Virtual DOM is just the HTML string'],correct:0,dmg:25,exp:'React keeps a virtual DOM (JS object tree). On state change, it creates new vDOM, diffs with previous (reconciliation), finds minimum changes needed, then batches DOM updates. Keys help the diff algorithm match elements across renders.'},
+  {q:'Why might this cause an infinite loop? useEffect(() => { setCount(count+1) }, [count])',choices:['It won\'t — useEffect is safe','count changes → effect runs → setCount → count changes → effect runs... forever!','It only runs twice','useEffect can\'t read state'],correct:1,dmg:30,exp:'Dependency [count] means "run when count changes." The effect calls setCount which changes count. Which runs the effect. Which changes count. Infinite loop. Fix: use setCount(c => c+1) with empty deps [].'},
+  {q:'What\'s the difference between useLayoutEffect and useEffect?',choices:['No difference','useLayoutEffect fires synchronously after DOM mutations, before paint — blocking. useEffect fires after paint — non-blocking.','useLayoutEffect is deprecated','useLayoutEffect only works in class components'],correct:1,dmg:20,exp:'useEffect fires asynchronously after browser paints — good for most cases. useLayoutEffect fires synchronously after DOM updates but BEFORE browser paints — use when you need to read DOM layout to avoid flicker (like tooltip positioning).'},
+  {q:'How would you implement a debounced search input in React?',choices:['Just use onChange directly','Store input in state, useEffect with setTimeout on value change, clear previous timer in cleanup','Use useMemo on the input','Add debounce directly to setState'],correct:1,dmg:25,exp:'const [q,setQ]=useState(""); useEffect(()=>{ const t=setTimeout(()=>search(q),300); return ()=>clearTimeout(t); },[q]). Cleanup clears the previous timer when q changes — search only fires 300ms after user STOPS typing.'},
+];
+
+const scheduleData=[
+  {time:'8:00–9:00',title:'JSX & Component Fundamentals',topics:'JSX syntax, createElement, keys, fragments, className, conditional rendering',xp:'+50 XP',phase:'warm',phaseLabel:'Warm Up'},
+  {time:'9:00–10:30',title:'State Mastery (useState)',topics:'State updates, functional updates, object state, stale closures, batching',xp:'+60 XP',phase:'battle',phaseLabel:'Battle'},
+  {time:'10:30–11:00',title:'☕ Break + Flashcard Blitz',topics:'Review JSX & useState flashcards. Quick 10-card run.',xp:'+20 XP',phase:'rest',phaseLabel:'Rest'},
+  {time:'11:00–12:30',title:'useEffect & Lifecycle Deep Dive',topics:'Deps array, cleanup, data fetching, stale closure, rules of hooks',xp:'+70 XP',phase:'battle',phaseLabel:'Battle'},
+  {time:'12:30–1:30',title:'🍔 Lunch + Mental Reset',topics:'Walk around. No screens. Let concepts settle in.',xp:'',phase:'rest',phaseLabel:'Rest'},
+  {time:'1:30–2:30',title:'Context API + useRef + useReducer',topics:'createContext, Provider, useContext, ref for DOM, reducer pattern',xp:'+80 XP',phase:'battle',phaseLabel:'Battle'},
+  {time:'2:30–3:30',title:'Performance: memo + useMemo + useCallback',topics:'When to memoize, what causes re-renders, profiler tool',xp:'+90 XP',phase:'boss',phaseLabel:'Boss Zone'},
+  {time:'3:30–4:00',title:'☕ Break + Boss Fight Round 1',topics:'Open Boss Fight tab — defeat the Senior Dev Interviewer!',xp:'+50 XP',phase:'boss',phaseLabel:'Boss Zone'},
+  {time:'4:00–5:00',title:'Custom Hooks + Patterns',topics:'Extract logic into custom hooks, controlled inputs, lifting state, composition',xp:'+80 XP',phase:'battle',phaseLabel:'Battle'},
+  {time:'5:00–6:00',title:'FINAL BOSS: Full Mock Interview',topics:'Boss Fight — answer all 5 questions without mistakes. Simulate real interview pressure.',xp:'+100 XP',phase:'boss',phaseLabel:'Final Boss'},
+  {time:'6:00–7:00',title:'Review + Flashcard Marathon',topics:'Go through ALL concept card topics. Write down anything you struggled with.',xp:'+30 XP',phase:'rest',phaseLabel:'Review'},
+  {time:'7:00+',title:'🏆 Challenge Arena — Full Run',topics:'Complete all 9 zones in the Battle Map. You are ready.',xp:'+200 XP',phase:'boss',phaseLabel:'Victory'},
+];
+
+function notify(msg){
+  const n=document.createElement('div');
+  n.className='notif';n.textContent=msg;
+  document.body.appendChild(n);
+  setTimeout(()=>n.remove(),3000);
+}
+
+function gainXP(amount){
+  xp+=amount;streak++;
+  const newLevel=Math.floor(xp/XP_PER_LEVEL)+1;
+  if(newLevel>level){level=newLevel;notify('🎉 Level Up! You are now Level '+level+'!');}
+  document.getElementById('s-xp').textContent=xp;
+  document.getElementById('s-streak').textContent=streak+'🔥';
+  document.getElementById('s-level').textContent='LV '+level;
+  document.getElementById('xp-bar').style.width=((xp%XP_PER_LEVEL)/XP_PER_LEVEL*100)+'%';
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',['map','quiz','cards','boss','schedule'][i]===tab);
+  });
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+}
+
+function renderMap(){
+  const grid=document.getElementById('map-grid');
+  grid.innerHTML='';
+  zones.forEach(z=>{
+    const div=document.createElement('div');
+    div.className='zone'+(z.locked?' locked':'');
+    div.innerHTML=(z.boss?'<div class="boss-badge">BOSS ZONE</div>':'')+
+      '<div class="zone-icon">'+z.icon+'</div>'+
+      '<div class="zone-name">'+z.name+'</div>'+
+      '<div class="zone-desc">'+z.desc+'</div>'+
+      '<div class="zone-meta"><div class="zone-xp">+'+z.xp+' XP</div>'+
+      '<div class="zone-status '+(z.locked?'status-locked':'status-open')+'">'+(z.locked?'🔒 Locked':'▶ Enter')+'</div></div>';
+    if(!z.locked)div.onclick=()=>enterZone(z.id);
+    grid.appendChild(div);
+  });
+}
+
+function enterZone(zoneId){
+  currentZone=zoneId;currentQ=0;answered=false;
+  switchTab('quiz');renderQuestion();
+}
+
+function renderQuestion(){
+  if(!currentZone||!questions[currentZone])return;
+  const qs=questions[currentZone];
+  if(currentQ>=qs.length){zoneComplete();return;}
+  const q=qs[currentQ];
+  answered=false;
+  document.getElementById('q-zone-name').textContent=zones.find(z=>z.id===currentZone)?.name||'';
+  document.getElementById('q-zone-sub').textContent='Question '+(currentQ+1)+' of '+qs.length;
+  document.getElementById('q-difficulty').textContent=q.diff;
+  document.getElementById('q-text').textContent=q.q;
+  document.getElementById('q-next').style.display='none';
+  document.getElementById('q-explanation').className='explanation';
+  const letters=['A','B','C','D'];
+  const opts=document.getElementById('q-options');
+  opts.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt';
+    btn.innerHTML='<span class="opt-letter">'+letters[i]+'</span>'+o;
+    btn.onclick=()=>selectAnswer(i,q.correct,q.exp);
+    opts.appendChild(btn);
+  });
+  const dots=document.getElementById('q-dots');
+  dots.innerHTML='';
+  qs.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(i<currentQ?' done':i===currentQ?' active':'');
+    dots.appendChild(d);
+  });
+}
+
+function selectAnswer(chosen,correct,exp){
+  if(answered)return;
+  answered=true;
+  document.querySelectorAll('.opt').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===correct)b.classList.add('correct');
+    if(i===chosen&&chosen!==correct)b.classList.add('wrong');
+  });
+  const expEl=document.getElementById('q-explanation');
+  expEl.textContent='💡 '+exp;
+  expEl.className='explanation show';
+  if(chosen===correct){gainXP(15);notify('✅ Correct! +15 XP');}
+  else{streak=0;document.getElementById('s-streak').textContent=streak+'🔥';notify('❌ Wrong — read the explanation!');}
+  document.getElementById('q-next').style.display='block';
+}
+
+function nextQuestion(){currentQ++;renderQuestion();}
+
+function zoneComplete(){
+  const z=zones.find(z=>z.id===currentZone);
+  gainXP(z?.xp||50);
+  notify('🏆 Zone Complete! +'+(z?.xp||50)+' XP');
+  document.getElementById('q-text').textContent='🎉 Zone complete! You crushed it. Return to the map for your next challenge.';
+  document.getElementById('q-options').innerHTML='';
+  document.getElementById('q-dots').innerHTML='';
+  document.getElementById('q-explanation').className='explanation';
+  document.getElementById('q-next').style.display='none';
+}
+
+function renderFC(){
+  const topics=Object.keys(flashcards);
+  const chips=document.getElementById('fc-chips');
+  chips.innerHTML='';
+  topics.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.className='fc-chip'+(i===fcTopic?' sel':'');
+    d.textContent=t;
+    d.onclick=()=>{fcTopic=i;fcIndex=0;fcFlipped=false;document.getElementById('flashcard').classList.remove('flipped');renderFC();};
+    chips.appendChild(d);
+  });
+  const topic=topics[fcTopic];
+  const cards=flashcards[topic];
+  const card=cards[fcIndex];
+  document.getElementById('fc-front-text').textContent=card.front;
+  document.getElementById('fc-back-text').textContent=card.back;
+  document.getElementById('fc-counter').textContent=(fcIndex+1)+' / '+cards.length;
+}
+
+function flipCard(){
+  fcFlipped=!fcFlipped;
+  document.getElementById('flashcard').classList.toggle('flipped',fcFlipped);
+  if(fcFlipped)gainXP(2);
+}
+
+function nextCard(){
+  const cards=flashcards[Object.keys(flashcards)[fcTopic]];
+  fcIndex=(fcIndex+1)%cards.length;
+  fcFlipped=false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  renderFC();
+}
+
+function prevCard(){
+  const cards=flashcards[Object.keys(flashcards)[fcTopic]];
+  fcIndex=(fcIndex-1+cards.length)%cards.length;
+  fcFlipped=false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  renderFC();
+}
+
+function newBossFight(){
+  bossHp=100;playerHp=100;bossQIdx=0;bossAnswered=false;
+  updateBossHP();renderBossQ();
+}
+
+function updateBossHP(){
+  document.getElementById('boss-hp-num').textContent=Math.max(0,bossHp)+'/100';
+  document.getElementById('player-hp-num').textContent=Math.max(0,playerHp)+'/100';
+  document.getElementById('boss-hp-fill').style.width=Math.max(0,bossHp)+'%';
+  document.getElementById('player-hp-fill').style.width=Math.max(0,playerHp)+'%';
+}
+
+function renderBossQ(){
+  if(bossQIdx>=bossQuestions.length){
+    document.getElementById('boss-q-text').textContent='🏆 YOU DEFEATED THE BOSS! You are ready for any React interview!';
+    document.getElementById('boss-choices').innerHTML='';
+    document.getElementById('boss-feedback').style.display='none';
+    gainXP(100);notify('🎊 BOSS DEFEATED! +100 XP!');return;
+  }
+  bossAnswered=false;
+  const bq=bossQuestions[bossQIdx];
+  document.getElementById('boss-q-text').textContent=bq.q;
+  document.getElementById('boss-feedback').style.display='none';
+  document.getElementById('boss-next').style.display='none';
+  const choices=document.getElementById('boss-choices');
+  choices.innerHTML='';
+  bq.choices.forEach((c,i)=>{
+    const btn=document.createElement('button');
+    btn.className='boss-choice';
+    btn.textContent=(i===0?'⚔ ':i===1?'🛡 ':i===2?'💨 ':'🎯 ')+c;
+    btn.onclick=()=>selectBossAnswer(i,bq);
+    choices.appendChild(btn);
+  });
+}
+
+function selectBossAnswer(chosen,bq){
+  if(bossAnswered)return;
+  bossAnswered=true;
+  document.querySelectorAll('.boss-choice').forEach(b=>b.disabled=true);
+  document.querySelectorAll('.boss-choice')[bq.correct].classList.add('hit');
+  if(chosen!==bq.correct)document.querySelectorAll('.boss-choice')[chosen].classList.add('miss');
+  const fb=document.getElementById('boss-feedback');
+  if(chosen===bq.correct){
+    bossHp-=bq.dmg;
+    fb.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(46,213,115,0.1);border-left:3px solid #2ed573;font-size:13px;margin:8px 0;line-height:1.6;color:#c8c6e8';
+    fb.textContent='⚔ Critical hit! '+bq.exp;
+    gainXP(20);notify('💥 Hit! -'+bq.dmg+' Boss HP! +20 XP');
+  } else {
+    playerHp-=25;
+    fb.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(255,71,87,0.1);border-left:3px solid #ff4757;font-size:13px;margin:8px 0;line-height:1.6;color:#c8c6e8';
+    fb.textContent='💔 Missed! The boss attacks! '+bq.exp;
+    streak=0;document.getElementById('s-streak').textContent=streak+'🔥';
+    notify('💔 Boss hit you! -25 HP');
+  }
+  updateBossHP();
+  if(playerHp<=0){
+    document.getElementById('boss-q-text').textContent='☠️ You were defeated! Study more and try again!';
+    document.getElementById('boss-choices').innerHTML='';
+    document.getElementById('boss-next').style.display='none';return;
+  }
+  document.getElementById('boss-next').style.display='block';
+}
+
+function nextBossQ(){bossQIdx++;renderBossQ();}
+
+function renderSchedule(){
+  const list=document.getElementById('schedule-list');
+  list.innerHTML='';
+  const phaseColors={warm:'phase-warm',battle:'phase-battle',boss:'phase-boss',rest:'phase-rest'};
+  scheduleData.forEach(s=>{
+    const div=document.createElement('div');
+    div.className='time-block';
+    div.innerHTML='<div class="time-tag">'+s.time+'</div>'+
+      '<div class="time-content">'+
+      '<div class="time-title">'+s.title+'<span class="phase-badge '+phaseColors[s.phase]+'">'+s.phaseLabel+'</span></div>'+
+      '<div class="time-topics">'+s.topics+'</div>'+
+      (s.xp?'<div class="time-xp">'+s.xp+'</div>':'')+
+      '</div>';
+    list.appendChild(div);
+  });
+}
+
+renderMap();
+renderFC();
+renderSchedule();
+newBossFight();
+</script>
+</body>
+</html>
